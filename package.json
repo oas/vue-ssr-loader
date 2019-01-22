@@ -1,0 +1,9 @@
+{
+  "name": "vue-ssr-loader",
+  "version": "0.1.0",
+  "main": "main.js",
+  "dependencies": {
+    "vue": "2.5.21",
+	"vue-template-compiler": "2.5.21"
+  }
+}
