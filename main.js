@@ -1,11 +1,17 @@
 const FileSystem = require("fs");
 const Path = require("path");
 
+const Renderer = require('vue-server-renderer');
 const Compiler = require("vue-template-compiler");
 const Module = require('module');
 const Vue = require("vue");
 
-module.exports = function () {
+module.exports = function (options) {
+	// Automatic Asset Injection must be disabled to allow our manual injection.
+	options.inject = false;
+
+	this.renderer = Renderer.createRenderer(options);
+
 	this.compile = function (path) {
 		// parse our custom .vue file that consists of two custom tags: <client> and <server>
 		const template = Compiler.parseComponent(FileSystem.readFileSync(path).toString());
@@ -41,13 +47,9 @@ module.exports = function () {
 		const options = serverComponent;
 		options.template = clientComponent.template.content;
 
-		// TODO: we should add the vue-server-renderer configuration to this file
-		return {
-			vue: new Vue(options),
-			options: {
-				styles: clientComponent.styles[0].content.replace(/[\r\n\t]/g, ""),
-				scripts: clientComponent.script.content // TODO: use uglify-js to minify the content of <script>
-			}
-		};
+		return this.renderer.renderToString(new Vue(options), {
+			styles: clientComponent.styles[0].content.replace(/[\r\n\t]/g, ""),
+			scripts: clientComponent.script.content // TODO: use uglify-js to minify the content of <script>
+		});
 	};
 };
