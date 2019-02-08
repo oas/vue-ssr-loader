@@ -1,5 +1,10 @@
 {
   "name": "vue-ssr-loader",
+  "description": "\uD83D\uDCDD Server Side Rendering without webpack",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oas/vue-ssr-loader.git"
+  },
   "version": "0.1.0",
   "main": "main.js",
   "dependencies": {

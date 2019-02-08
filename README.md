@@ -2,6 +2,11 @@
 TODO
 
 ## Example
+
+### Modification
+In order to be able to represent both the client and the server in a single file, we divide them into tags.
+The `<client>` tag includes everything that will be minified and injected into the template.
+The `<server>` tag will be executed on the server, the result will be passed to a vue instance.
 ```html
 <client>
   <template>
@@ -9,20 +14,20 @@ TODO
   </template>
 
   <style>
-    /* this will be minified and injected into the template */
+    /* This will change the appearance of our <p> tag. */
     p {
       color: red;
     }
   </style>
 
   <script>
-    console.info("this will be minified and injected into the template 🎉");
+    console.info("This will show up in our DevTools. 🎉");
   </script>
 </client>
 
 <server>
   <script>
-    // this will be added to a vue instance and executed server side
+    // This will be passed to a vue instance.
     module.exports = {
       data: function () {
         return {
