@@ -3,35 +3,47 @@ const Path = require("path");
 const Module = require("module");
 
 const Vue = require("vue");
-const Renderer = require('vue-server-renderer');
-const Compiler = require("vue-template-compiler");
+const VueRenderer = require('vue-server-renderer');
+const VueCompiler = require("vue-template-compiler");
 
 module.exports = function (options) {
+	this.path = options.path;
+
 	// Automatic Asset Injection must be disabled to allow our manual injection.
-	options.inject = false;
+	this.renderer = VueRenderer.createRenderer({
+		inject: false,
+		template: options.template
+	});
 
-	this.renderer = Renderer.createRenderer(options);
+	this.compile = function (serverFile, clientFile, context) {
+		// Resolve the relative server and client path.
+		const serverPath = Path.resolve(this.path, serverFile);
+		const clientPath = Path.resolve(this.path, clientFile);
 
-	this.compile = function (path, context) {
-		// the template value is used for the http response:
-		// <template>: will be added as a vue template
-		// <style>: will be injected into the defined <style> tag of the website
-		// <script>: will be injected into the defined <script> tag of the website
-		const component = this.compileComponent(FileSystem.readFileSync(path).toString(), path);
-		const descriptor = Compiler.parseComponent(component.template);
+		// The server file is used to render the page on the server.
+		// <template>: vue template
+		// <script>: vue instance
+		const serverDescriptor = VueCompiler.parseComponent(FileSystem.readFileSync(serverPath).toString());
 
-		component.template = descriptor.template.content;
-		context.styles = "<style data-server-rendered=\"true\">" + descriptor.styles[0].content.replace(/[\r\n\t]/g, "") + "</style>";
-		context.scripts = "<script data-server-rendered=\"true\">" + descriptor.script.content + "</script>"; // TODO: use uglify-js to minify the content of <script>
+		// The client file is used to add css or javascript to the page. Will be bundled in the future.
+		// <style>: css
+		// <script>: javascript
+		const clientDescriptor = VueCompiler.parseComponent(FileSystem.readFileSync(clientPath).toString());
 
-		return this.renderer.renderToString(new Vue(component), context);
+		// Enrich the vue instance.
+		const instance = this.compileScript(serverDescriptor.script.content, serverPath);
+		instance.template = serverDescriptor.template.content;
+
+		// Enrich the context.
+		context.styles = "<style data-server-rendered=\"true\">" + clientDescriptor.styles[0].content + "</style>";
+		context.scripts = "<script data-server-rendered=\"true\">" + clientDescriptor.script.content + "</script>";
+
+		return this.renderer.renderToString(new Vue(instance), context);
 	};
 
-	this.compileComponent = function (content, path) {
-		// the server component contains the server logic and will be added to the vue instance
-		// the vue template defined in the <client> tag can react based on the server logic
-
-		// we are creating a virtual module so we can hot reload changes in the .vue file
+	this.compileScript = function (content, path) {
+		// We are creating a virtual module so we can hot reload changes in the .vue file.
+		// TODO: Are we using id and filename correctly?
 		const virtualModule = new Module(path, module);
 		virtualModule.id = path;
 		virtualModule.filename = path;
