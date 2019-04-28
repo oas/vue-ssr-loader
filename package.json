@@ -5,7 +5,7 @@
     "type": "git",
     "url": "https://github.com/oas/vue-ssr-loader.git"
   },
-  "version": "0.2.0",
+  "version": "0.5.0",
   "main": "main.js",
   "dependencies": {
     "vue": "2.5.21",
